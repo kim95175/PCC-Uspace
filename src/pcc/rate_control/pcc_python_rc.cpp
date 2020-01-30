@@ -51,6 +51,8 @@ PccPythonRateController::PccPythonRateController(double call_freq,
     time_offset_usec = 0;
 
     const char* python_path_arg = Options::Get("-pypath="); // The location in which the pcc_addon.py file can be found.
+    python_path_arg = "/home/airman/Github/PCC-RL/src/udt-plugins/testing/"
+    
     if (python_path_arg != NULL) {
         int python_path_arg_len = strlen(python_path_arg);
         char python_path_cmd_buf[python_path_arg_len + 50];
@@ -61,6 +63,9 @@ PccPythonRateController::PccPythonRateController(double call_freq,
 
     const char* python_filename = "pcc_rate_controller";
     const char* python_filename_arg = Options::Get("-pyhelper=");
+    
+    python_filename_arg = "loaded_client"
+    
     if (python_filename_arg != NULL) {
         python_filename = python_filename_arg;
     }

@@ -118,6 +118,9 @@ PccSender::PccSender(QuicTime initial_rtt_us,
   
   // CLARG: "--pcc-utility-calc=<utility_calculator>" See src/pcc/utility for more info.
   const char* uc_name = Options::Get("--pcc-utility-calc=");
+  
+  uc_name = "linear"
+
   if (uc_name == NULL) {
       utility_calculator_ = PccUtilityCalculatorFactory::Create("", log);
   } else {
