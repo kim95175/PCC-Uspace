@@ -63,7 +63,6 @@ PccPythonRateController::PccPythonRateController(double call_freq,
 
     const char* python_filename = "pcc_rate_controller";
     const char* python_filename_arg = Options::Get("-pyhelper=");
-    
     python_filename_arg = "loaded_client"
     
     if (python_filename_arg != NULL) {

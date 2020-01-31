@@ -118,7 +118,6 @@ PccSender::PccSender(QuicTime initial_rtt_us,
   
   // CLARG: "--pcc-utility-calc=<utility_calculator>" See src/pcc/utility for more info.
   const char* uc_name = Options::Get("--pcc-utility-calc=");
-  
   uc_name = "linear"
 
   if (uc_name == NULL) {
@@ -133,6 +132,7 @@ PccSender::PccSender(QuicTime initial_rtt_us,
 
   // CLARG: "--pcc-rate-control=<rate_controller>" See src/pcc/rate_controler for more info.
   const char* rc_name = Options::Get("--pcc-rate-control=");
+  rc_name = "python"
   std::string rc_name_str = "";
   if (rc_name != NULL) {
       rc_name_str = std::string(rc_name);
