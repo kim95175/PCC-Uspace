@@ -50,12 +50,14 @@ const float kNumMicrosPerSecond = 1000000.0f;
 // Default TCPMSS used in UDT only.
 const size_t kDefaultTCPMSS = 1400;
 // An inital RTT value to use (10ms)
-const size_t kInitialRttMicroseconds = 1 * 1000;
+//const size_t kInitialRttMicroseconds = 1 * 1000;
+const size_t kInitialRttMicroseconds = 32 * 100;
 #endif
 // Number of bits per byte.
 const size_t kBitsPerByte = 8;
 // Duration of monitor intervals as a proportion of RTT.
-const float kMonitorIntervalDuration = 0.5f;
+//const float kMonitorIntervalDuration = 0.5f;
+const float kMonitorIntervalDuration = 3.0f;
 // Minimum number of packets in a monitor interval.
 const size_t kMinimumPacketsPerInterval = 5;
 }  // namespace

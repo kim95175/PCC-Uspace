@@ -142,7 +142,7 @@ void PccPythonRateController::GiveSample(int bytes_sent,
                                          double utility) {
 
     std::lock_guard<std::mutex> lock(interpreter_lock_);
-    static PyObject* args = PyTuple_New(11);
+    static PyObject* args = PyTuple_New(12);
     
     // flow_id
     PyTuple_SetItem(args, 0, PyLong_FromLong(id));
@@ -168,6 +168,21 @@ void PccPythonRateController::GiveSample(int bytes_sent,
     // recv_end_time
     PyTuple_SetItem(args, 7, PyFloat_FromDouble(recv_end_time_sec));
 
+    //first_ack_rtt 
+    PyTuple_SetItem(args, 8, PyFloat_FromDouble(first_ack_latency_sec));
+
+    //last_ack_rtt 
+    PyTuple_SetItem(args, 9, PyFloat_FromDouble(last_ack_latency_sec));
+
+    // packet_size
+    PyTuple_SetItem(args, 10, PyLong_FromLong(packet_size));
+    
+    // recv_end_time
+    PyTuple_SetItem(args, 11, PyFloat_FromDouble(utility));
+    
+    PyObject_CallObject(give_sample_func, args);
+
+    /*
     // rtt_samples
     PyObject* rtt_samples = PyList_New(2);
     PyList_SetItem(rtt_samples, 0, PyLong_FromLong(first_ack_latency_sec));
@@ -181,10 +196,12 @@ void PccPythonRateController::GiveSample(int bytes_sent,
     PyTuple_SetItem(args, 10, PyFloat_FromDouble(utility));
     
     PyObject_CallObject(give_sample_func, args);
+    */
 
 }
 
 void PccPythonRateController::MonitorIntervalFinished(const MonitorInterval& mi) {
+    
     if (!has_time_offset) {
         time_offset_usec = mi.GetSendStartTime();
         has_time_offset = true;
@@ -202,6 +219,7 @@ void PccPythonRateController::MonitorIntervalFinished(const MonitorInterval& mi)
         mi.GetAveragePacketSize(),
         mi.GetUtility()
     );
+
 }
 
 QuicBandwidth PccPythonRateController::GetNextSendingRate(QuicBandwidth current_rate, QuicTime cur_time) {

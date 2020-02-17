@@ -214,6 +214,17 @@ float MonitorInterval::GetObsUtility() const {
 }
 
 uint64_t MonitorInterval::GetFirstAckLatency() const {
+    /*if (packet_rtt_samples.size() < 2) {
+        return 0;
+    }
+    float first_half_rtt_sum = 0;
+    int half_count = packet_rtt_samples.size() / 2;
+    for (int i = 0; i < half_count; ++i) {
+        first_half_rtt_sum += packet_rtt_samples[i].rtt;
+    }
+    std::cout << "First halfcount: " << half_count << std::endl; 
+    std::cout << "First Rtt: " << first_half_rtt_sum / half_count << std::endl; 
+    return first_half_rtt_sum / half_count;*/
     if (packet_rtt_samples.size() > 0) {
         return packet_rtt_samples.front().rtt;
     }
@@ -221,6 +232,18 @@ uint64_t MonitorInterval::GetFirstAckLatency() const {
 }
 
 uint64_t MonitorInterval::GetLastAckLatency() const {
+    
+    /*if (packet_rtt_samples.size() < 2) {
+        return 0;
+    }
+    float second_half_rtt_sum = 0;
+    int half_count = packet_rtt_samples.size() / 2;
+    for (int i = half_count+1; i < 2 * half_count; ++i) {
+        second_half_rtt_sum += packet_rtt_samples[i].rtt;        
+    }
+    std::cout << "last halfcount: " << half_count << std::endl; 
+    std::cout << "Last Rtt: " << second_half_rtt_sum / half_count << std::endl; 
+    return second_half_rtt_sum / half_count;*/
     if (packet_rtt_samples.size() > 0) {
         return packet_rtt_samples.back().rtt;
     }
