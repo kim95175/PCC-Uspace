@@ -15,21 +15,25 @@ float PccLinearUtilityCalculator::CalculateUtility(PccMonitorIntervalAnalysisGro
   float throughput = cur_mi.GetObsThroughput();
   float avg_rtt = cur_mi.GetObsRtt();
   float loss_rate = cur_mi.GetObsLossRate();
-
+  double first_rtt = cur_mi.GetFirstAckLatency() / 1000000.0;
+  double last_rtt = cur_mi.GetLastAckLatency() / 1000000.0;
+ /*
   if (loss_rate < 1.0) {
       last_rtt = avg_rtt;
   } else {
       avg_rtt = last_rtt;
-  }
+  }*/
 
   float thpt_pkt_per_sec = throughput / (8.0 * 1500);
   float rtt_sec = avg_rtt / 1000000.0;
 
   float utility = pow(throughput, 0.9) - 1000 * avg_rtt - 11.35 * throughput * loss_rate;
-  utility = throughput - 1000 * avg_rtt - 1e8 * loss_rate;
+  //utility = throughput - 1000 * avg_rtt - 1e8 * loss_rate;
   utility = 10.0 * thpt_pkt_per_sec - 1000.0 * rtt_sec - 2000.0 * loss_rate;
 
   //std::cout << "LINEAR CALC! Rtt: " << rtt_sec << std::endl;
+  std::cout << "first Rtt: " << first_rtt << std::endl;
+  std::cout << "last Rtt: " << last_rtt << std::endl;
 
   //utility = -1 * abs(cur_mi.GetObsSendingRate() - 1e7);
 
