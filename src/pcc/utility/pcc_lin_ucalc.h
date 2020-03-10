@@ -3,6 +3,9 @@
 #define _PCC_LIN_UCALC_H_
 
 #include "pcc_ucalc.h"
+#include "../pcc_logger.h"
+#include "../../core/options.h"
+#include <iostream>
 
 class PccLinearUtilityCalculator : public PccUtilityCalculator {
   public:

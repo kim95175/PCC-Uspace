@@ -51,15 +51,20 @@ const float kNumMicrosPerSecond = 1000000.0f;
 const size_t kDefaultTCPMSS = 1400;
 // An inital RTT value to use (10ms)
 //const size_t kInitialRttMicroseconds = 1 * 1000;
-const size_t kInitialRttMicroseconds = 32 * 1000;
+const size_t kInitialRttMicroseconds = 32 * 1000; //32ms
+
+
 #endif
 // Number of bits per byte.
 const size_t kBitsPerByte = 8;
 // Duration of monitor intervals as a proportion of RTT.
-const float kMonitorIntervalDuration = 0.5f;
-//const float kMonitorIntervalDuration = 3.0f;
+//const float kMonitorIntervalDuration = 0.5f;
+const float kMonitorIntervalDuration = 2.0f;
+//const float kCallFreq = 1.5f;
+
 // Minimum number of packets in a monitor interval.
 const size_t kMinimumPacketsPerInterval = 5;
+//const size_t kMinimumPacketsPerInterval = 2;
 }  // namespace
 
 #ifdef QUIC_PORT
@@ -119,6 +124,7 @@ PccSender::PccSender(QuicTime initial_rtt_us,
     log = new PccEventLogger(Options::Get("-log="));    
   }
   #endif
+  //log = new PccEventLogger("pcc_log.txt");
   
   // CLARG: "--pcc-utility-calc=<utility_calculator>" See src/pcc/utility for more info.
   const char* uc_name = Options::Get("--pcc-utility-calc=");
@@ -134,6 +140,7 @@ PccSender::PccSender(QuicTime initial_rtt_us,
   // We'll tell the rate controller how many times per RTT it is called so it can run aglorithms
   // like doubling every RTT fairly easily.
   double call_freq = 1.0 / kMonitorIntervalDuration;
+  //double call_freq = 1.0 / kCallFreq;
 
   // CLARG: "--pcc-rate-control=<rate_controller>" See src/pcc/rate_controler for more info.
   const char* rc_name = Options::Get("--pcc-rate-control=");

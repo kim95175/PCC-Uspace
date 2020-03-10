@@ -4,6 +4,7 @@ std::map<std::string, bool> PccLoggableEvent::flag_map;
 
 PccLoggableEvent::PccLoggableEvent(const std::string& event_name, const std::string& flag) {
     active = CheckFlag(flag);
+    active = true;
     if (!active) {
         return;
     }

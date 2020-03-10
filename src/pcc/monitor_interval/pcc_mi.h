@@ -114,6 +114,8 @@ struct MonitorInterval {
   uint64_t GetFirstAckLatency() const;
   uint64_t GetLastAckLatency() const;
 
+  int GetRTTSize() const { return packet_rtt_samples.size(); }
+
   int GetAveragePacketSize() const { return bytes_sent / n_packets_sent; }
   double GetUtility() const { return utility; }
 

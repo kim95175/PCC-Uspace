@@ -53,7 +53,7 @@ PccPythonRateController::PccPythonRateController(double call_freq,
     time_offset_usec = 0;
 
     const char* python_path_arg = Options::Get("-pypath="); // The location in which the pcc_addon.py file can be found.
-    python_path_arg = "/home/airman/Github/PCC-RL/src/udt-plugins/testing/";
+    python_path_arg = "/home/airman/Github/cc-gym/src/udt-plugins/testing/";
     //python_path_arg = "/home/airman/Github/PCC-RL/src/udt-plugins/training/"
 
     if (python_path_arg != NULL) {
@@ -202,10 +202,11 @@ void PccPythonRateController::GiveSample(int bytes_sent,
 
 void PccPythonRateController::MonitorIntervalFinished(const MonitorInterval& mi) {
     
-    if (!has_time_offset) {
-        time_offset_usec = mi.GetSendStartTime();
+    /*if (!has_time_offset) {
+        set_usec = mi.GetSendStartTime();
         has_time_offset = true;
-    }
+    }*/
+    time_offset_usec = mi.GetSendStartTime();
     GiveSample(
         mi.GetBytesSent(),
         mi.GetBytesAcked(),

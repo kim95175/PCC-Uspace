@@ -155,6 +155,7 @@ QuicBandwidth MonitorInterval::GetObsSendingRate() const {
     if (dur == 0) {
         return 0;
     }
+    double obs_rate = 8 * bytes_sent / dur;
     return 8 * bytes_sent / (dur / 1000000.0);
 }
 
