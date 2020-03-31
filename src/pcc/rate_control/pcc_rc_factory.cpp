@@ -6,7 +6,8 @@ PccRateController* PccRateControllerFactory::Create(const std::string& name, dou
         return new PccVivaceRateController(call_freq);
     } else if (name == "ixp") {
         return new PccIxpRateController(call_freq, log);
-    } else*/ if (name == "python") {
+    } else*/ 
+    if (name == "python") {
         return new PccPythonRateController(call_freq, log);
     }
     return new PccPythonRateController(call_freq, log);

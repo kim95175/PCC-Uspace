@@ -4,6 +4,8 @@
 #include <iostream>
 using namespace std;
 
+std::mutex PccPythonRateController::sending_rate_lock_;
+
 std::mutex PccPythonRateController::interpreter_lock_;
 bool PccPythonRateController::python_initialized_ = false;
 
@@ -44,6 +46,7 @@ PccPythonRateController::PccPythonRateController(double call_freq,
         PccEventLogger* log) {
 
     std::lock_guard<std::mutex> lock(interpreter_lock_);
+    std::cerr << "[python_rc]PccPythonRateController lock on " << std::endl;
     if (!python_initialized_) {
         InitializePython();
     }
@@ -54,7 +57,7 @@ PccPythonRateController::PccPythonRateController(double call_freq,
 
     const char* python_path_arg = Options::Get("-pypath="); // The location in which the pcc_addon.py file can be found.
     python_path_arg = "/home/airman/Github/cc-gym/src/udt-plugins/testing/";
-    //python_path_arg = "/home/airman/Github/PCC-RL/src/udt-plugins/training/"
+    //python_path_arg = "/home/airman/Github/cc-gym/src/udt-plugins/training/"
 
     if (python_path_arg != NULL) {
         cout << "pypath: " << python_path_arg << endl;
@@ -121,6 +124,7 @@ PccPythonRateController::PccPythonRateController(double call_freq,
 void PccPythonRateController::Reset() {
     std::cout << "Starting Reset" << std::endl;
     std::lock_guard<std::mutex> lock(interpreter_lock_);
+    std::cerr << "[python_rc]Reset lock on " << std::endl;
     PyObject* id_obj = PyLong_FromLong(id);
     static PyObject* args = PyTuple_New(1);
     PyTuple_SetItem(args, 0, id_obj);
@@ -142,7 +146,9 @@ void PccPythonRateController::GiveSample(int bytes_sent,
                                          double utility) {
 
     std::lock_guard<std::mutex> lock(interpreter_lock_);
+    std::cerr << "[python_rc]GiveSample lock on " << std::endl;
     static PyObject* args = PyTuple_New(12);
+    //static PyObject* args = PyTuple_New(11);
     
     // flow_id
     PyTuple_SetItem(args, 0, PyLong_FromLong(id));
@@ -181,10 +187,9 @@ void PccPythonRateController::GiveSample(int bytes_sent,
     PyTuple_SetItem(args, 11, PyFloat_FromDouble(utility));
     
     PyObject_CallObject(give_sample_func, args);
-
-    /*
+    
     // rtt_samples
-    PyObject* rtt_samples = PyList_New(2);
+    /*PyObject* rtt_samples = PyList_New(2);
     PyList_SetItem(rtt_samples, 0, PyLong_FromLong(first_ack_latency_sec));
     PyList_SetItem(rtt_samples, 1, PyLong_FromLong(last_ack_latency_sec));
     PyTuple_SetItem(args, 8, rtt_samples);
@@ -195,8 +200,9 @@ void PccPythonRateController::GiveSample(int bytes_sent,
     // recv_end_time
     PyTuple_SetItem(args, 10, PyFloat_FromDouble(utility));
     
-    PyObject_CallObject(give_sample_func, args);
-    */
+    PyObject_CallObject(give_sample_func, args);*/
+    //std::cerr << "[python_rc]GiveSample lock off " << std::endl;
+    
 
 }
 
@@ -225,14 +231,17 @@ void PccPythonRateController::MonitorIntervalFinished(const MonitorInterval& mi)
 
 QuicBandwidth PccPythonRateController::GetNextSendingRate(QuicBandwidth current_rate, QuicTime cur_time) {
 
+    std::cerr << "[python_rc]start GetNextSendingRate" << std::endl;
     std::lock_guard<std::mutex> lock(interpreter_lock_);
-    
+    //std::lock_guard<std::mutex> lock(sending_rate_lock_);
+    std::cerr << "[python_rc]GetNextSendingRate lock on" << std::endl;
     PyObject* id_obj = PyLong_FromLong(id);
     static PyObject* args = PyTuple_New(1);
     PyTuple_SetItem(args, 0, id_obj);
     
     PyObject* result = PyObject_CallObject(get_rate_func, args);
     if (result == NULL) {
+        std::cerr << "ERROR: Failed to call python get_rate() func" << std::endl;
         std::cout << "ERROR: Failed to call python get_rate() func" << std::endl;
         PyErr_Print();
         exit(-1);
@@ -241,10 +250,11 @@ QuicBandwidth PccPythonRateController::GetNextSendingRate(QuicBandwidth current_
     double result_double = PyFloat_AsDouble(result);
     PyErr_Print();
     if (!PyFloat_Check(result)) {
+        std::cerr << "ERROR: Failed to call python get_rate() func" << std::endl;
         std::cout << "ERROR: Output from python get_rate() is not a float" << std::endl;
         exit(-1);
     }
     Py_DECREF(result);
-
+    std::cerr << " result Rate : " << result_double << std::endl;
     return result_double;
 }

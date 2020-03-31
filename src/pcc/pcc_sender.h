@@ -163,6 +163,10 @@ class QUIC_EXPORT_PRIVATE PccSender
   
   void UpdateCurrentRttEstimate(QuicTime rtt);
 
+  bool isEmpty;
+  bool isAllSent;
+  bool shouldCreate;
+
   bool ShouldCreateNewMonitorInterval(QuicTime cur_time);
   QuicBandwidth UpdateSendingRate(QuicTime cur_time);
 
@@ -184,6 +188,11 @@ class QUIC_EXPORT_PRIVATE PccSender
   PccUtilityCalculator* utility_calculator_;
   PccRateController* rate_controller_;
   std::mutex* rate_control_lock_;
+  //std::recursive_mutex* rate_control_lock_;
+  
+  //std::mutex* update_rate_lock_;
+  std::mutex* interval_lock_;
+
 };
 
 #ifdef QUIC_PORT
