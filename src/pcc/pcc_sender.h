@@ -166,6 +166,7 @@ class QUIC_EXPORT_PRIVATE PccSender
   bool isEmpty;
   bool isAllSent;
   bool shouldCreate;
+  //float sending_rate;
 
   bool ShouldCreateNewMonitorInterval(QuicTime cur_time);
   QuicBandwidth UpdateSendingRate(QuicTime cur_time);

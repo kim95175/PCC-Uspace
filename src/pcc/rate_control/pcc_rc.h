@@ -12,6 +12,7 @@ class PccRateController {
     virtual ~PccRateController() {};
     virtual QuicBandwidth GetNextSendingRate(QuicBandwidth current_rate, QuicTime cur_time) = 0;
     virtual void MonitorIntervalFinished(const MonitorInterval& mi) = 0;
+    //virtual double MonitorIntervalFinished(const MonitorInterval& mi) = 0;
     virtual void Reset() {std::cout << "DEFAULT RESET CALLED" << std::endl; };
 };
 

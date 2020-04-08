@@ -4,8 +4,6 @@
 #include <iostream>
 using namespace std;
 
-std::mutex PccPythonRateController::sending_rate_lock_;
-
 std::mutex PccPythonRateController::interpreter_lock_;
 bool PccPythonRateController::python_initialized_ = false;
 
@@ -36,17 +34,23 @@ void PccPythonRateController::InitializePython() {
 }
 
 int PccPythonRateController::GetNextId() {
+    
     static int next_id = 0;
     int id = next_id;
     ++next_id;
     return id;
+    /*static int next_id = id;
+    int r_id = next_id;
+    ++next_id;
+    return r_id;*/
+    
 }
 
 PccPythonRateController::PccPythonRateController(double call_freq,
         PccEventLogger* log) {
 
     std::lock_guard<std::mutex> lock(interpreter_lock_);
-    std::cerr << "[python_rc]PccPythonRateController lock on " << std::endl;
+    //std::cerr << "[python_rc]PccPythonRateController lock on " << std::endl;
     if (!python_initialized_) {
         InitializePython();
     }
@@ -76,6 +80,7 @@ PccPythonRateController::PccPythonRateController(double call_freq,
 
     if (python_filename_arg != NULL) {
         cout << "pyhelper: " << python_filename_arg << endl;
+        cerr << "pyhelper: " << python_filename_arg << endl;
         python_filename = python_filename_arg;
     }
     
@@ -133,6 +138,19 @@ void PccPythonRateController::Reset() {
     PyErr_Print();
 }
 
+/*void PccPythonRateController::GiveSample(int bytes_sent,
+                                         int bytes_acked,
+                                         int bytes_lost,
+                                         double send_start_time_sec,
+                                         double send_end_time_sec,
+                                         double recv_start_time_sec,
+                                         double recv_end_time_sec,
+                                         double first_ack_latency_sec,
+                                         double last_ack_latency_sec,
+                                         int packet_size,
+                                         double utility) */
+
+//double PccPythonRateController::GiveSample(int bytes_sent,
 void PccPythonRateController::GiveSample(int bytes_sent,
                                          int bytes_acked,
                                          int bytes_lost,
@@ -186,35 +204,48 @@ void PccPythonRateController::GiveSample(int bytes_sent,
     // recv_end_time
     PyTuple_SetItem(args, 11, PyFloat_FromDouble(utility));
     
+    std::cerr << " Call Object give_sample_func" << std::endl;
     PyObject_CallObject(give_sample_func, args);
+    std::cerr << " id : " << id << std::endl; 
     
-    // rtt_samples
-    /*PyObject* rtt_samples = PyList_New(2);
-    PyList_SetItem(rtt_samples, 0, PyLong_FromLong(first_ack_latency_sec));
-    PyList_SetItem(rtt_samples, 1, PyLong_FromLong(last_ack_latency_sec));
-    PyTuple_SetItem(args, 8, rtt_samples);
+    /*
+    PyObject* id_obj = PyLong_FromLong(id);
+    static PyObject* rate_args = PyTuple_New(1);
+    PyTuple_SetItem(rate_args, 0, id_obj);
     
-    // packet_size
-    PyTuple_SetItem(args, 9, PyLong_FromLong(packet_size));
-    
-    // recv_end_time
-    PyTuple_SetItem(args, 10, PyFloat_FromDouble(utility));
-    
-    PyObject_CallObject(give_sample_func, args);*/
-    //std::cerr << "[python_rc]GiveSample lock off " << std::endl;
-    
-
+    std::cerr << " Call Object get_rate_func" << std::endl;
+    PyObject* result = PyObject_CallObject(get_rate_func, rate_args);
+    if (result == NULL) {
+        std::cerr << "ERROR: Failed to call python get_rate() func" << std::endl;
+        std::cout << "ERROR: Failed to call python get_rate() func" << std::endl;
+        PyErr_Print();
+        exit(-1);
+    }
+    double result_double = PyFloat_AsDouble(result);
+    PyErr_Print();
+    if (!PyFloat_Check(result)) {
+        std::cerr << "ERROR: Failed to call python get_rate() func" << std::endl;
+        std::cout << "ERROR: Output from python get_rate() is not a float" << std::endl;
+        exit(-1);
+    }
+    Py_DECREF(result);
+    std::cerr << " result Rate : " << result_double << std::endl;
+    std::cerr << "[python_rc]GiveSample lock off " << std::endl;
+    return result_double;*/
 }
 
+
+
 void PccPythonRateController::MonitorIntervalFinished(const MonitorInterval& mi) {
+//double PccPythonRateController::MonitorIntervalFinished(const MonitorInterval& mi) {
     
     /*if (!has_time_offset) {
         set_usec = mi.GetSendStartTime();
         has_time_offset = true;
     }*/
     time_offset_usec = mi.GetSendStartTime();
-    GiveSample(
-        mi.GetBytesSent(),
+    //double result = GiveSample(  mi.GetBytesSent(),
+    GiveSample( mi.GetBytesSent(),
         mi.GetBytesAcked(),
         mi.GetBytesLost(),
         (mi.GetSendStartTime() - time_offset_usec) / (double)USEC_PER_SEC,
@@ -226,35 +257,36 @@ void PccPythonRateController::MonitorIntervalFinished(const MonitorInterval& mi)
         mi.GetAveragePacketSize(),
         mi.GetUtility()
     );
-
+    //return result;
 }
 
 QuicBandwidth PccPythonRateController::GetNextSendingRate(QuicBandwidth current_rate, QuicTime cur_time) {
 
     std::cerr << "[python_rc]start GetNextSendingRate" << std::endl;
     std::lock_guard<std::mutex> lock(interpreter_lock_);
-    //std::lock_guard<std::mutex> lock(sending_rate_lock_);
     std::cerr << "[python_rc]GetNextSendingRate lock on" << std::endl;
     PyObject* id_obj = PyLong_FromLong(id);
     static PyObject* args = PyTuple_New(1);
     PyTuple_SetItem(args, 0, id_obj);
     
     PyObject* result = PyObject_CallObject(get_rate_func, args);
+    std::cerr << "rate_result " << result << std::endl;
     if (result == NULL) {
         std::cerr << "ERROR: Failed to call python get_rate() func" << std::endl;
-        std::cout << "ERROR: Failed to call python get_rate() func" << std::endl;
+        std::cerr << "ERROR: Failed to call python get_rate() func" << std::endl;
         PyErr_Print();
         exit(-1);
     }
     
     double result_double = PyFloat_AsDouble(result);
+    std::cerr << "rate_delta " << result_double << std::endl;
     PyErr_Print();
     if (!PyFloat_Check(result)) {
         std::cerr << "ERROR: Failed to call python get_rate() func" << std::endl;
-        std::cout << "ERROR: Output from python get_rate() is not a float" << std::endl;
+        std::cerr << "ERROR: Output from python get_rate() is not a float" << std::endl;
         exit(-1);
     }
     Py_DECREF(result);
-    std::cerr << " result Rate : " << result_double << std::endl;
+    //std::cerr << " result Rate : " << result_double << std::endl;
     return result_double;
 }

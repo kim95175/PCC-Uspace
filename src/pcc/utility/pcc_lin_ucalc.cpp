@@ -12,17 +12,17 @@ const float kRttCoefficient = 1.0/30000.0f;
 
 float PccLinearUtilityCalculator::CalculateUtility(PccMonitorIntervalAnalysisGroup& past_monitor_intervals,
         MonitorInterval& cur_mi) {
-  std::cerr << "\tutility cal func " << std::endl;
+  //std::cerr << "\tutility cal func " << std::endl;
   float throughput = cur_mi.GetObsThroughput();
-  std::cerr << "\tthroughput: " << throughput << std::endl;
+  //std::cerr << "\tthroughput: " << throughput << std::endl;
   float avg_rtt = cur_mi.GetObsRtt() / 1000.0; //ms
-  std::cerr << "\tavg_rtt: " << avg_rtt << std::endl;
+  //std::cerr << "\tavg_rtt: " << avg_rtt << std::endl;
   float loss_rate = cur_mi.GetObsLossRate();
-  std::cerr << "\tloss_rate: " << loss_rate << std::endl;
+  //std::cerr << "\tloss_rate: " << loss_rate << std::endl;
   double first_rtt = cur_mi.GetFirstAckLatency() / 1000000.0;
-  std::cerr << "\tfirst_rtt: " << first_rtt << std::endl;
+  //std::cerr << "\tfirst_rtt: " << first_rtt << std::endl;
   double last_rtt = cur_mi.GetLastAckLatency() / 1000000.0;
-  std::cerr << "\tlast_rtt: " << last_rtt << std::endl;
+  //std::cerr << "\tlast_rtt: " << last_rtt << std::endl;
 
  /*
   if (loss_rate < 1.0) {

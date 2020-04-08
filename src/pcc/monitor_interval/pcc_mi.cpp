@@ -141,10 +141,10 @@ QuicBandwidth MonitorInterval::GetTargetSendingRate() const {
 }
 
 QuicBandwidth MonitorInterval::GetObsThroughput() const {
-    std::cerr << "GetObsTrouhgput func start "<< std::endl;
+    //std::cerr << "GetObsTrouhgput func start "<< std::endl;
     float dur = GetObsRecvDur();
-    std::cerr << "Num packets: " << n_packets_sent << std::endl;
-    std::cerr << "Dur: " << dur << " Acked: " << bytes_acked << std::endl;
+    //std::cerr << "Num packets: " << n_packets_sent << std::endl;
+    //std::cerr << "Dur: " << dur << " Acked: " << bytes_acked << std::endl;
     if (dur == 0) {
         return 0;
     }
@@ -165,9 +165,9 @@ float MonitorInterval::GetObsSendDur() const {
 }
 
 float MonitorInterval::GetObsRecvDur() const {
-    std::cerr << "MI " << id << "\n";
-    std::cerr << "\tfirst ack " << first_packet_ack_time << "\n\tlast ack " << last_packet_ack_time << "\n";
-    std::cerr << "\tRecvDur " << last_packet_ack_time - first_packet_ack_time << std::endl;
+    //std::cerr << "MI " << id << "\n";
+    //std::cerr << "\tfirst ack " << first_packet_ack_time << "\n\tlast ack " << last_packet_ack_time << "\n";
+    //std::cerr << "\tRecvDur " << last_packet_ack_time - first_packet_ack_time << std::endl;
     return (last_packet_ack_time - first_packet_ack_time);
 }
 

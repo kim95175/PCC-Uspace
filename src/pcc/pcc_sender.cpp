@@ -64,6 +64,7 @@ const float kMonitorIntervalDuration = 0.5f;
 
 // Minimum number of packets in a monitor interval.
 const size_t kMinimumPacketsPerInterval = 10;
+const double delta_scale = 0.05;
 //const size_t kMinimumPacketsPerInterval = 2;
 }  // namespace
 
@@ -82,9 +83,9 @@ QuicTime::Delta PccSender::ComputeMonitorDuration(
 QuicTime PccSender::ComputeMonitorDuration(
     QuicBandwidth sending_rate, 
     QuicTime rtt) {
-  std::cerr << "start ComputeMonitorDuration" << std::endl;
-  std::cerr << "rtt based duration : " << kMonitorIntervalDuration * rtt << std::endl;
-  std::cerr << "minimum based duration : " << kNumMicrosPerSecond * kMinimumPacketsPerInterval * kBitsPerByte * kDefaultTCPMSS / (float)sending_rate<< std::endl;
+  //std::cerr << "start ComputeMonitorDuration" << std::endl;
+  //std::cerr << "rtt based duration : " << kMonitorIntervalDuration * rtt << std::endl;
+  //std::cerr << "minimum based duration : " << kNumMicrosPerSecond * kMinimumPacketsPerInterval * kBitsPerByte * kDefaultTCPMSS / (float)sending_rate<< std::endl;
   return
       std::max(kMonitorIntervalDuration * rtt, 
                kNumMicrosPerSecond * kMinimumPacketsPerInterval * kBitsPerByte * 
@@ -141,7 +142,7 @@ PccSender::PccSender(QuicTime initial_rtt_us,
 
   // We'll tell the rate controller how many times per RTT it is called so it can run aglorithms
   // like doubling every RTT fairly easily.
-  double call_freq = 1.0 / kMonitorIntervalDuration;
+  double call_freq = 2.0 / kMonitorIntervalDuration;
   //double call_freq = 1.0 / kCallFreq;
 
   // CLARG: "--pcc-rate-control=<rate_controller>" See src/pcc/rate_controler for more info.
@@ -185,19 +186,16 @@ void PccSender::Reset() {
 bool PccSender::ShouldCreateNewMonitorInterval(QuicTime sent_time) {
     //return interval_queue_.Empty() ||
     //    interval_queue_.Current().AllPacketsSent(sent_time);
-    shouldCreate = interval_queue_.Empty() ||
-        interval_queue_.Current().AllPacketsSent(sent_time);
-    /*if (shouldCreate) {
-      std::cerr << "should Create: " << shouldCreate << std::endl;
-    }*/
+    
+    shouldCreate = interval_queue_.Empty() || interval_queue_.Current().AllPacketsSent(sent_time);
     return shouldCreate;
-    /*
-    isEmpty = interval_queue_.Empty();
+    
+    /*isEmpty = interval_queue_.Empty();
     isAllSent = interval_queue_.Current().AllPacketsSent(sent_time);
     shouldCreate = isEmpty || isAllSent;
-    std::cout << "isEmpty: " << isEmpty << std::endl;
-    std::cout << "isAllSent: " << isAllSent << std::endl;
-    std::cout << "should Create: " << shouldCreate << std::endl;
+    std::cerr << "isEmpty: " << isEmpty << std::endl;
+    std::cerr << "isAllSent: " << isAllSent << std::endl;
+    std::cerr << "should Create: " << shouldCreate << std::endl;
     return shouldCreate;*/
 }
 
@@ -218,19 +216,25 @@ QuicTime PccSender::GetCurrentRttEstimate(QuicTime sent_time) {
 }
 
 QuicBandwidth PccSender::UpdateSendingRate(QuicTime event_time) {
-  std::cerr << " start_updateSendingRate " << std::endl;
+  //std::cerr << " start_updateSendingRate " << std::endl;
   rate_control_lock_->lock();
-  //if(rate_control_lock_->try_lock()) {
-    std::cerr << "sending rate lock on " << std::endl;
-    sending_rate_ = rate_controller_->GetNextSendingRate(sending_rate_, event_time);
-    std::cerr << " GetNextSendingRate done " << std::endl;
-    rate_control_lock_->unlock();
-    std::cerr << "sending rate lock off " << std::endl;
-    std::cerr << "PCC: rate = " << sending_rate_ << std::endl;
-    return sending_rate_;
-  //} else {
-  //  return sending_rate_;
-  //}
+  //std::cerr << "sending rate lock on " << std::endl;
+  //double rate_delta = rate_controller_->GetNextSendingRate(sending_rate_, event_time);
+  sending_rate_ = rate_controller_->GetNextSendingRate(sending_rate_, event_time);
+  //std::cerr << " GetNextSendingRate done " << std::endl;
+  rate_control_lock_->unlock();
+  /*
+  rate_delta *= delta_scale;
+  if (rate_delta > 0) {
+    sending_rate_ *= (1.0 + rate_delta);
+  } else if ( rate_delta < 0) {
+    sending_rate_ /= (1.0 - rate_delta);
+  }*/
+
+  //std::cerr << "sending rate lock off " << std::endl;
+  //std::cerr << "PCC: rate = " << sending_rate_ << std::endl;
+  return sending_rate_;
+  
 }
 
 void PccSender::OnPacketSent(QuicTime sent_time,
@@ -242,9 +246,10 @@ void PccSender::OnPacketSent(QuicTime sent_time,
   if (ShouldCreateNewMonitorInterval(sent_time)) {
     // Set the monitor duration to 1.5 of smoothed rtt.
     QuicTime rtt_estimate = GetCurrentRttEstimate(sent_time);
-    std::cerr << " current RTT Estimate done " << std::endl;
+    //std::cerr << "call update sending rate " << std::endl;
     float sending_rate = UpdateSendingRate(sent_time);
-    std::cerr << " updateSendingRate done " << std::endl;
+    //sending_rate = sending_rate_;
+    //std::cerr << " updateSendingRate done " << std::endl;
     QuicTime monitor_duration = ComputeMonitorDuration(sending_rate, rtt_estimate); 
     //std::cerr << " comput monitor duration done " << std::endl;
     //std::cerr << "Create MI:" << std::endl;
@@ -288,15 +293,14 @@ void PccSender::OnCongestionEvent(UDT_UNUSED bool rtt_updated,
     //std::cerr << " starting calcuate utility" << std::endl;
     mi.SetUtility(utility_calculator_->CalculateUtility(interval_analysis_group_, mi));
     //std::cerr << " calcuate utility done" << std::endl;
-    //if(rate_control_lock_->try_lock()) {
-      interval_lock_->lock();
-      //rate_control_lock_->lock();
-      std::cerr << "interval lock on " << std::endl;
-      rate_controller_->MonitorIntervalFinished(mi);
-      std::cerr << " MonitorIntervalFinishied" << std::endl;
-      interval_lock_->unlock();
-      //rate_control_lock_->unlock();
-      std::cerr << "interval lock off " << std::endl;
+    rate_control_lock_->lock();
+    //std::cerr << "Finished lock on - Call givesample " << std::endl;
+    //sending_rate_ = rate_controller_->MonitorIntervalFinished(mi);
+    rate_controller_->MonitorIntervalFinished(mi);
+    //std::cerr << " MonitorIntervalFinishied" << std::endl;
+    //sending_rate_ = UpdateSendingRate(event_time);
+    rate_control_lock_->unlock();
+    //std::cerr << "Finished lock off " << std::endl;
     //} 
   }
 }

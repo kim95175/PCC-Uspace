@@ -23,6 +23,8 @@ class PccPythonRateController : public PccRateController {
 
   QuicBandwidth GetNextSendingRate(QuicBandwidth current_rate, QuicTime cur_time);
   void MonitorIntervalFinished(const MonitorInterval& mi);
+  //double MonitorIntervalFinished(const MonitorInterval& mi);
+
 
   void Reset();
  private:
@@ -30,11 +32,13 @@ class PccPythonRateController : public PccRateController {
   static void InitializePython();
   static int GetNextId();
   static std::mutex interpreter_lock_;
-  static std::mutex sending_rate_lock_;
   static bool python_initialized_;
 
   
-  void GiveSample(int bytes_sent,
+  
+                  
+void GiveSample(int bytes_sent,
+//double GiveSample(int bytes_sent,
                   int bytes_acked,
                   int bytes_lost,
                   double send_start_time_sec,
@@ -44,11 +48,11 @@ class PccPythonRateController : public PccRateController {
                   double first_ack_latency_sec,
                   double last_ack_latency_sec,
                   int packet_size,
-                  double utility);
-                  
+                  double utility);       
 
 
   int id;
+  //static int next_id = 0;
   bool has_time_offset;
   uint64_t time_offset_usec;
   
